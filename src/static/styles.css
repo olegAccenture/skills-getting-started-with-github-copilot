@@ -6,6 +6,18 @@
 }
 
 body {
+  /* Add CSS to hide bullet points */
+  ul.participants-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  /* Add styles for delete icon */
+  .delete-icon {
+    cursor: pointer;
+    color: red;
+    margin-left: 10px;
+  }
   font-family: Arial, sans-serif;
   line-height: 1.6;
   color: #333;

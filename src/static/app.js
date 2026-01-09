@@ -10,15 +10,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch("/activities");
       const activities = await response.json();
 
-      // Clear loading message
+      // Clear loading message and the select dropdown
       activitiesList.innerHTML = "";
+      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
 
-      // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
 
         const spotsLeft = details.max_participants - details.participants.length;
+
+        const participantsList = details.participants.map(participant => 
+          `<li>${participant} <span class='delete-icon' data-participant='${participant}'>&#10006;</span></li>`
+        ).join('');
 
         activityCard.innerHTML = `
           <h4>${name}</h4>
@@ -28,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="participants-section">
             <h5>Participants (${details.participants.length}/${details.max_participants})</h5>
             <ul class="participants-list">
-              ${details.participants.map(participant => `<li>${participant}</li>`).join('')}
+              ${participantsList}
             </ul>
           </div>
         `;
@@ -40,6 +44,19 @@ document.addEventListener("DOMContentLoaded", () => {
         option.value = name;
         option.textContent = name;
         activitySelect.appendChild(option);
+      });
+
+      // Attach delete event listeners after DOM is updated
+      const deleteIcons = document.querySelectorAll('.delete-icon');
+      deleteIcons.forEach(icon => {
+        icon.addEventListener('click', async (event) => {
+          const participant = event.target.dataset.participant;
+          const activityName = event.target.closest('.activity-card').querySelector('h4').textContent;
+          await fetch(`/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(participant)}`, {
+            method: 'DELETE',
+          });
+          fetchActivities(); // Refresh the activities list
+        });
       });
     } catch (error) {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
@@ -68,6 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities(); // Refresh the activities list
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
