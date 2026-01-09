@@ -46,6 +46,24 @@
       <p>&copy; 2023 Mergington High School</p>
     </footer>
 
-    <script src="app.js?v=2"></script>
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Confirm Removal</h3>
+          <button class="modal-close" id="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to remove <strong id="participant-name"></strong> from <strong id="activity-name"></strong>?</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" id="btn-cancel">Cancel</button>
+          <button class="btn-confirm" id="btn-confirm">Remove</button>
+        </div>
+      </div>
+      <div class="modal-backdrop"></div>
+    </div>
+
+    <script src="app.js?v=3"></script>
   </body>
 </html>

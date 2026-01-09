@@ -184,3 +184,53 @@ def test_signup_with_special_characters_in_email(client, reset_activities):
     
     assert response.status_code == 200
     assert email in activities[activity_name]["participants"]
+
+
+def test_unregister_from_activity_success(client, reset_activities):
+    """Test successfully unregistering from an activity"""
+    activity_name = "Chess Club"
+    email = "michael@mergington.edu"  # Already registered
+    
+    # Verify participant is initially registered
+    assert email in activities[activity_name]["participants"]
+    
+    response = client.delete(
+        f"/activities/{activity_name}/unregister",
+        params={"email": email}
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert "message" in data
+    assert email in data["message"]
+    assert activity_name in data["message"]
+    
+    # Verify the student was removed
+    assert email not in activities[activity_name]["participants"]
+
+
+def test_unregister_from_nonexistent_activity(client):
+    """Test unregistering from an activity that doesn't exist"""
+    response = client.delete(
+        "/activities/Nonexistent%20Activity/unregister",
+        params={"email": "test@mergington.edu"}
+    )
+    
+    assert response.status_code == 404
+    data = response.json()
+    assert "Activity not found" in data["detail"]
+
+
+def test_unregister_not_registered_student(client):
+    """Test that unregistering a student who is not registered fails"""
+    activity_name = "Chess Club"
+    email = "notregistered@mergington.edu"
+    
+    response = client.delete(
+        f"/activities/{activity_name}/unregister",
+        params={"email": email}
+    )
+    
+    assert response.status_code == 400
+    data = response.json()
+    assert "not registered" in data["detail"]

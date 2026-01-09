@@ -3,6 +3,31 @@ document.addEventListener("DOMContentLoaded", () => {
   const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
+  
+  // Modal elements
+  const confirmationModal = document.getElementById("confirmation-modal");
+  const participantNameElement = document.getElementById("participant-name");
+  const activityNameElement = document.getElementById("activity-name");
+  const btnConfirm = document.getElementById("btn-confirm");
+  const btnCancel = document.getElementById("btn-cancel");
+  const modalClose = document.getElementById("modal-close");
+  
+  // Store the current deletion context
+  let pendingDeletion = null;
+
+  // Function to open the confirmation modal
+  function openConfirmationModal(participant, activity) {
+    pendingDeletion = { participant, activity };
+    participantNameElement.textContent = participant;
+    activityNameElement.textContent = activity;
+    confirmationModal.classList.remove("hidden");
+  }
+
+  // Function to close the confirmation modal
+  function closeConfirmationModal() {
+    confirmationModal.classList.add("hidden");
+    pendingDeletion = null;
+  }
 
   // Function to fetch activities from API
   async function fetchActivities() {
@@ -49,13 +74,10 @@ document.addEventListener("DOMContentLoaded", () => {
       // Attach delete event listeners after DOM is updated
       const deleteIcons = document.querySelectorAll('.delete-icon');
       deleteIcons.forEach(icon => {
-        icon.addEventListener('click', async (event) => {
+        icon.addEventListener('click', (event) => {
           const participant = event.target.dataset.participant;
           const activityName = event.target.closest('.activity-card').querySelector('h4').textContent;
-          await fetch(`/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(participant)}`, {
-            method: 'DELETE',
-          });
-          fetchActivities(); // Refresh the activities list
+          openConfirmationModal(participant, activityName);
         });
       });
     } catch (error) {
@@ -63,6 +85,35 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error fetching activities:", error);
     }
   }
+
+  // Handle confirmation button click
+  btnConfirm.addEventListener("click", async () => {
+    if (!pendingDeletion) return;
+    
+    try {
+      await fetch(`/activities/${encodeURIComponent(pendingDeletion.activity)}/unregister?email=${encodeURIComponent(pendingDeletion.participant)}`, {
+        method: 'DELETE',
+      });
+      closeConfirmationModal();
+      fetchActivities(); // Refresh the activities list
+    } catch (error) {
+      console.error("Error unregistering participant:", error);
+      closeConfirmationModal();
+    }
+  });
+
+  // Handle cancel button click
+  btnCancel.addEventListener("click", closeConfirmationModal);
+
+  // Handle modal close button click
+  modalClose.addEventListener("click", closeConfirmationModal);
+
+  // Close modal when clicking on the backdrop
+  confirmationModal.addEventListener("click", (event) => {
+    if (event.target === confirmationModal || event.target.classList.contains("modal-backdrop")) {
+      closeConfirmationModal();
+    }
+  });
 
   // Handle form submission
   signupForm.addEventListener("submit", async (event) => {
